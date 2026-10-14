@@ -1,0 +1,23 @@
+# Local dependencies and test output
+node_modules/
+coverage/
+.nyc_output/
+*.log
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Generated release archives
+*.zip
+dist/
+
+# Editor and operating-system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini

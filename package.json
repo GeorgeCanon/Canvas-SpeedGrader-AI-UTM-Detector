@@ -1,0 +1,6 @@
+{
+  "name": "speedgrader-llm-link-check",
+  "version": "1.2.0",
+  "private": true,
+  "scripts": { "test": "node --test tests/*.test.cjs" }
+}

@@ -1,0 +1,3 @@
+body { width: 310px; padding: 14px; font: 13px/1.5 system-ui, sans-serif; color: #172c39; }
+h1 { font-size: 18px; margin: 0; } .note { color: #526572; font-size: 12px; }
+button { display: block; width: 100%; margin: 8px 0; padding: 8px; border: 1px solid #aebdc7; border-radius: 6px; background: #eef5f8; cursor: pointer; overflow-wrap: anywhere; }

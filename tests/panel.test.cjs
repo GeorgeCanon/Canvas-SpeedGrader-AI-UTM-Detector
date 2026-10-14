@@ -1,0 +1,46 @@
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const vm = require('node:vm');
+const fs = require('node:fs');
+const code = fs.readFileSync(require.resolve('../extension/panel.js'), 'utf8');
+const tick = () => new Promise(resolve => setImmediate(resolve));
+
+test('starts compact, expands for new matches, respects collapse, and resets for each student', async () => {
+  const node = () => ({ open: false, textContent: '', append() {}, appendChild() {}, replaceChildren() {}, addEventListener() {} });
+  const elements = new Map();
+  const shadow = { querySelector(selector) { if (!elements.has(selector)) elements.set(selector, node()); return elements.get(selector); } };
+  const document = { hidden: false, getElementById: () => null, documentElement: node(), addEventListener() {}, createElement: () => ({ ...node(), attachShadow: () => shadow }) };
+  const location = { href: 'https://canvas.asu.edu/courses/1/gradebook/speed_grader?student_id=1' };
+  const first = { url: 'https://example.com/?utm_source=chatgpt', label: 'Reference', kind: 'Link', evidence: [{ provider: 'ChatGPT', key: 'utm_source', value: 'chatgpt', url: 'https://example.com/?utm_source=chatgpt' }] };
+  let hits = [];
+  let rescan;
+  vm.runInNewContext(code, { document, location, window: { addEventListener() {} }, setInterval: callback => { rescan = callback; }, chrome: { runtime: { sendMessage: async message => {
+    assert.equal(message.type, 'scan');
+    return { results: [0, 1].map(frameId => ({ frameId, matches: hits, linksChecked: hits.length })) };
+  } } } });
+  assert.match(shadow.innerHTML, /<details>/);
+  assert.doesNotMatch(shadow.innerHTML, /<details open/);
+  await tick();
+  const details = elements.get('details');
+  assert.equal(details.open, false);
+  hits = [first];
+  await rescan();
+  assert.equal(details.open, true);
+  details.open = false;
+  await rescan(); await rescan();
+  assert.equal(details.open, false);
+  hits = [first, { ...first, url: 'https://new.example/?utm_source=chatgpt' }];
+  await rescan();
+  assert.equal(details.open, true);
+  location.href = location.href.replace('student_id=1', 'student_id=2');
+  hits = [];
+  await rescan();
+  assert.equal(details.open, false);
+  hits = [first];
+  await rescan();
+  assert.equal(details.open, true);
+  details.open = false;
+  location.href = location.href.replace('student_id=2', 'student_id=1');
+  await rescan();
+  assert.equal(details.open, true);
+});
